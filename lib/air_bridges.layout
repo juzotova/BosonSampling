@@ -1,0 +1,52 @@
+/*
+    Drawing airbrides
+
+*/
+
+
+point addAirBridge(cell* curCell, point anchorPoint, int width_feed_line, string direction) {
+
+    int bridge_width = width_feed_line/1.5;//width_feed_line/2  , 40
+    int pad_lenght = 2e3 + width_feed_line/2.5;//width_feed_line/3, 20
+    int pad_widtht_brigdge = bridge_width + 4e3;
+    int total_length = 1.3*width_feed_line + 2*pad_lenght-3e3;
+        
+    point cursor;
+    point start;
+
+    if (direction=="d") {
+        start.set(anchorPoint.x(), anchorPoint.y()+total_length/2);
+    //=========layer2===========   
+        cursor = wire(curCell, aux3, start, "d", total_length, bridge_width); 
+   //=========layer3===========   
+        cursor = wire(curCell, aux4, start, "d", pad_lenght, pad_widtht_brigdge);
+        cursor = wire(curCell, aux4, newPoint(anchorPoint.x(), anchorPoint.y()-total_length/2), "u", pad_lenght, pad_widtht_brigdge);
+
+
+    } else if(direction=="l") {
+        start.set(anchorPoint.x()-total_length/2, anchorPoint.y());
+    //=========layer2===========   
+        cursor = wire(curCell, aux3, start, "l", total_length, bridge_width); 
+   //=========layer3===========    
+        cursor = wire(curCell, aux4, start, "l", pad_lenght, pad_widtht_brigdge);
+        cursor = wire(curCell, aux4, newPoint(anchorPoint.x()+total_length/2, anchorPoint.y()), "l", pad_lenght, pad_widtht_brigdge);
+
+    } else if(direction=="r") {
+        start.set(anchorPoint.x()-total_length/2, anchorPoint.y());
+    //=========layer2===========   
+        cursor = wire(curCell, aux3, start, "r", total_length, bridge_width);  
+   //=========layer3===========    
+        cursor = wire(curCell, aux4, start, "r", pad_lenght, pad_widtht_brigdge);
+        cursor = wire(curCell, aux4, newPoint(anchorPoint.x()+total_length/2, anchorPoint.y()), "l", pad_lenght, pad_widtht_brigdge); 
+    } else  {
+                
+        start.set(anchorPoint.x(), anchorPoint.y()+total_length/2);
+    //=========layer2===========  
+        cursor = wire(curCell, aux3, start, "d", total_length, bridge_width);
+    //=========layer3===========
+        cursor = wire(curCell, aux4, start, "d", pad_lenght, pad_widtht_brigdge);
+        cursor = wire(curCell, aux4, newPoint(anchorPoint.x(), anchorPoint.y()-total_length/2), "u", pad_lenght, pad_widtht_brigdge); 
+    }
+
+
+}

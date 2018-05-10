@@ -1,0 +1,53 @@
+
+
+/*
+	Finger number is set only for one polarity
+*/
+
+	int fingerBusOverlap = 2.5e3;
+	int busLegde = 0e3;
+	int busWidth = 10e3;
+
+
+point addAcousticMirror(cell* curCell, point anchorPoint, int fingersOverlap, int fingerWidth, int fingerNum, int fingerBusGap=2.5e3) {
+
+        int busLength = 6*fingerWidth*fingerNum + 2*busLegde;
+        int i;
+
+    //=========Metal===========
+    
+   	point cursor = newPoint(anchorPoint.x(), anchorPoint.y()-busWidth/2);
+
+   	wire(curCell, M, cursor, "l", busLength/2, busWidth);
+   	wire(curCell, M, cursor, "r", busLength/2, busWidth);
+
+
+
+   	cursor.set(anchorPoint.x() - busLength/2 + busLegde + fingerWidth/2, 
+   		anchorPoint.y() - busWidth - 2*fingerBusGap - fingersOverlap - fingerBusOverlap);
+
+    point cursor1 = newPoint(cursor.x()+4*fingerWidth, anchorPoint.y() - busWidth + fingerBusOverlap);
+
+   	point cursor2 = newPoint(cursor.x()+2*fingerWidth, anchorPoint.y() - busWidth + fingerBusOverlap);
+
+   	for (i=0; i<fingerNum; i++) {
+
+   		wire(curCell, M, cursor, "u", fingersOverlap+fingerBusOverlap+fingerBusGap, fingerWidth);
+      wire(curCell, M, cursor1, "d", fingersOverlap+fingerBusOverlap+fingerBusGap, fingerWidth);
+   		wire(curCell, M, cursor2, "d", fingersOverlap+fingerBusOverlap+fingerBusGap, fingerWidth);
+
+   		cursor.set(cursor.x()+fingerWidth*6, cursor.y()); //bottom
+      cursor1.set(cursor1.x()+fingerWidth*6, cursor1.y()); //
+		  cursor2.set(cursor2.x()+fingerWidth*6, cursor2.y()); //topleft
+
+   	}
+
+	point cursor = newPoint(anchorPoint.x(), anchorPoint.y()-3*busWidth/2 - fingersOverlap - fingerBusGap*2);
+
+   	wire(curCell, M, cursor, "l", busLength/2, busWidth);
+   	wire(curCell, M, cursor, "r", busLength/2, busWidth);
+
+
+    return cursor;
+    
+}

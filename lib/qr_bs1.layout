@@ -1,0 +1,34 @@
+/*
+ QR code with the parameters
+*/
+
+
+void addQR(cell* curCell, int x1, int y1, int width, int height, int layer) {
+
+    point p1, p2;
+    p1.set(x1, y1); p2.set(x1+width,y1+height);
+
+    string data ="Test beamsplitter.\nChip size: "+chip_width/1e6+2*border/1e6;
+    data+= "x"+chip_height/1e6+2*border/1e6;
+    data+=" mm\n";
+    data+="Substrate ɛ: "+ɛ;
+    data+="\n";
+    data+= "General geometric parameters (um):\n ";
+        data+= "Beamsplitter:\n  ";
+            data += "w_feed: "+w_feed/1e3; data+="\n  ";
+            data += "g_feed: "+g_feed/1e3; data+="\n  ";
+            data += "w_splitter: "+w_splitter/1e3; data+="\n  ";
+            data += "g_splitter: "+g_splitter/1e3; data+="\n  ";
+            data += "meanderSegment_splitter: "+meanderSegment_splitter/1e3; data+="\n  ";
+            data += "meanderSegment_feed: "+meanderSegment_feed/1e3; data+="\n  ";
+            data += "splitter_freq: "+splitter_freq*1e9; data+="\n  ";
+            data += "hint_splitter: "+hint_splitter; data+="\n  ";
+            data += "radius curvature: "+airbridge_shift/w_feed -1; data+="w\n  ";
+
+    data+="\r---CC by Julia Zotova, 2018---";
+
+    layout->barcodeTool->setQrCode();
+    layout->barcodeTool->data = data;
+    layout->drawing->activeLayer=layer;
+    layout->barcodeTool->placeBarcode(p1, p2);
+}
