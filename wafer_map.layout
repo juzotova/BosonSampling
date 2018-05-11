@@ -1,0 +1,106 @@
+#!/usr/bin/layout
+#name=Beam Splitter
+#help=Creates BeamSplitter
+
+
+#include "../lib/resonator.layout"
+#include "../lib/wiring.layout"
+#include "../lib/auxx.layout"
+#include "../lib/layersSetup.layout"
+#include "../lib/feedline.layout"
+#include "../lib/air_bridges.layout"
+#include "../lib/alignment_mark.layout"
+#include "../lib/qr_bs1.layout"
+
+
+// name Julia_metbs_h1_2w_
+
+
+        int M = 0;
+        int ebeam = 1;
+        int protect = 2;
+        int ground = 3;
+        int mask = 4;
+        int total = 5;
+        int aux = 6;
+        int aux2 = 7;
+        int aux3 = 8;
+        int aux4 = 9;
+        int aux6 = 10;
+        int aux5 = 12;
+        int ebeam_total = 11;
+
+        
+        int wafer_raduis = 1*2.54e7; //in inch
+        int margins = 0.5e6;// in mm
+        int bottom_margin = 1.65e6;//1.9-margin
+        int cutlength = math::sqrt(2*(wafer_raduis-margins/2)*(bottom_margin-margins/2) - (bottom_margin-margins/2)*(bottom_margin-margins/2))-margins/2;
+        
+        double ɛ = 11.8;
+        double c = 299792458.0;
+
+
+
+int main() {
+    // Clearing the drawing field
+    setupLayers();
+    layout->drawing->selectAll();
+    layout->drawing->deleteSelect();
+    layout->drawing->deselectAll();
+
+
+    
+     // Getting the cell to draw on
+    cell *curCell = layout->drawing->currentCell;
+    point cursor;
+  
+    cursor = torusTurn(curCell, M, cursor, "ld", (wafer_raduis-margins)/2, wafer_raduis-margins);
+    cursor = torusTurn(curCell, M, cursor, "dr", (wafer_raduis-margins)/2, wafer_raduis-margins);
+    cursor = torusTurn(curCell, M, cursor, "ru", (wafer_raduis-margins)/2, wafer_raduis-margins);
+    cursor = torusTurn(curCell, M, cursor, "ul", (wafer_raduis-margins)/2, wafer_raduis-margins);
+    point cursor2 = newPoint(cursor.x(), cursor.y()-1.5*(wafer_raduis-margins));
+    cursor2 = wire(curCell, aux3, cursor2, "l", wafer_raduis, bottom_margin); 
+    cursor2 = wire(curCell, aux3, newPoint(cursor2.x()+wafer_raduis, cursor2.y()), "r", wafer_raduis, bottom_margin); 
+	 
+
+
+ 
+    //For lift-off process
+    //layout->booleanTool->boolOnLayer(aux3, M, M, "A-B", 0, 0, 0);
+/*    layout->booleanTool->boolOnLayer(M, aux, aux2, "A-B", 0, 0, 0);
+    layout->booleanTool->boolOnLayer(aux2, mask, total, "A+B", 0, 0, 0);
+*/
+    // For the etching designs
+        layout->booleanTool->boolOnLayer(protect, M, total, "A-B", 0, 0, 0);
+        //making the border
+        point cursor1 = newPoint(cursor.x(), cursor.y()+margins/2);
+        cursor1 = torusTurn(curCell, aux, cursor1, "ld", (wafer_raduis)/2, wafer_raduis);
+        cursor1 = torusTurn(curCell, aux, cursor1, "dr", (wafer_raduis)/2, wafer_raduis); 
+        cursor1 = torusTurn(curCell, aux, cursor1, "ru", (wafer_raduis)/2, wafer_raduis);
+        cursor1 = torusTurn(curCell, aux, cursor1, "ul", (wafer_raduis)/2, wafer_raduis); 
+        cursor2 = wire(curCell, aux4, newPoint(cursor2.x()-wafer_raduis, cursor2.y()+margins/2), "l", cutlength, bottom_margin+margins); 
+        cursor2 = wire(curCell, aux4, newPoint(cursor2.x()+cutlength, cursor2.y()), "r", cutlength, bottom_margin+margins); 
+
+
+        layout->booleanTool->boolOnLayer(aux4, aux3, aux5, "A-B", 0, 0, 0);
+        layout->booleanTool->boolOnLayer(M, aux4, M, "A+B", 0, 0, 0);
+        layout->booleanTool->boolOnLayer(aux, M, total, "A-B", 0, 0, 0);
+        layout->booleanTool->boolOnLayer(aux5, total, total, "A-B", 0, 0, 0); // same
+
+        
+        clearLayer(curCell, aux); // same
+    
+    // ===================================
+    layout->backgroundTool->clearBackground(); // to remove background picture, not present here.
+
+    clearLayer(curCell, mask);
+    clearLayer(curCell, M);
+    clearLayer(curCell, protect);
+    clearLayer(curCell, ground);
+    clearLayer(curCell, aux2);
+    clearLayer(curCell, aux);
+    clearLayer(curCell, aux6);
+    clearLayer(curCell, aux4);
+    clearLayer(curCell, aux5);
+    clearLayer(curCell, aux3);
+}

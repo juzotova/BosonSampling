@@ -1,0 +1,164 @@
+#!/usr/bin/layout
+#name=XMon resonators
+#help=Creates XMon resonator design
+
+
+#include "../lib/resonator.layout"
+#include "../lib/wiring.layout"
+#include "../lib/auxx.layout"
+#include "../lib/layersSetup.layout"
+#include "../lib/feedline.layout"
+#include "../lib/air_bridges.layout"
+
+
+
+
+
+
+        int M = 0;
+        int ebeam = 1;
+        int protect = 2;
+        int ground = 3;
+        int mask = 4;
+        int total = 5;
+        int aux = 6;
+        int aux2 = 7;
+        int aux3 = 8;
+        int aux4 = 9;
+        int aux6 = 10;
+        int ebeam_total = 11;
+
+        
+        int chip_height = 2e6;
+        int chip_width = 0.5e6;
+        int border = 0;
+        
+        double ɛ = 11.8;
+        //double ɛ_eff = ɛ/2 + 0.5;
+        double c = 299792458.0;
+
+        //int pads_shift = 260e3; //690e3 // 1043e3 // 492
+        double splitter_freq = 6; // in Ghz
+       	//int splitter_branch = c/(4*splitter_freq*math::sqrt(ɛ_eff));
+
+    
+
+        //coplanar lines
+        int w_feed = 10e3;//16, or 25
+        int g_feed = 6e3;//9.5 total is  25+29 = 54um, or 14.5
+
+
+        //waveguide with less resitance 90 and 16
+        int w_splitter = 36e3; //25, 29, 23.5//36
+        int g_splitter = 6e3; //5.5, 5, 4//6
+
+        int maxRadTurn = 4*w_feed; // 8*25 = 200
+        int aribridge_shift = (w_splitter+2*g_splitter)/2+4e3;
+        int adcurvebridge = 0;
+
+        int meanderSegment_splitter = 200e3; // 350
+        int meanderSegment_feed = 155e3;  //230
+        double hint_feed = 1.04;
+        double hint_splitter = 1.03;
+
+int main() {
+    // Clearing the drawing field
+    setupLayers();
+    layout->drawing->selectAll();
+    layout->drawing->deleteSelect();
+    layout->drawing->deselectAll();
+
+    //string sample_name = layout->getText("Sample name","Please enter the sample name:", "Test?"); // for a sample naming
+    
+     // Getting the cell to draw on
+    cell *curCell = layout->drawing->currentCell;
+    point cursor;
+
+
+    	int resonator_actual_x_length = 0;
+    	int resonator_actual_y_length = 2000e3;
+    	int size_gap = 50e3;
+
+		    //bottom clews
+
+		 	point feedline_start_left_bottom = newPoint(0, 0);
+
+		    intList segmentLengthsFeed;
+
+		    	stringList directions;
+                //directions.append("d");
+                directions.append("l");
+
+                //segmentLengthsFeed.append(2*(w_splitter+2*g_splitter));
+                segmentLengthsFeed.append(chip_width/2);
+
+		    addFeedline(curCell, feedline_start_left_bottom, w_feed, g_feed, segmentLengthsFeed, directions, "cd"); 
+
+		    
+		    //curCell->addText(protect, newPoint(-chip_width/2+100e3, -chip_height/2+400e3), sample_name); 
+
+
+		    point feedline_start_right_bottom = newPoint(0, 0);  
+
+
+		    	stringList directions;
+		    	//directions.append("d");
+		   	 	directions.append("r");
+
+		    addFeedline(curCell, feedline_start_right_bottom, w_feed, g_feed, segmentLengthsFeed, directions, "cd");
+
+
+
+
+
+    // curCell->addBox(-resonator_actual_x_length/2-size_gap/2, -resonator_actual_y_length/2 - size_gap/2, size_gap, size_gap, aux);
+    // curCell->addBox(resonator_actual_x_length/2-3*size_gap/2, resonator_actual_y_length/2 - size_gap/2, 3*size_gap, size_gap, aux);
+
+    //cursor = addHalfwaveTransmissionAssym(curCell, newPoint(-resonator_actual_x_length/2+1, -resonator_actual_y_length/2), w_feed, g_feed, splitter_freq, meanderSegment_feed, "d", hint_feed);
+
+    //airbridges
+    int airbridges_lenth = 0;
+    if (w_feed+2*g_feed>= w_splitter +2*g_splitter){
+        airbridges_lenth = w_feed+2*g_feed;
+    }
+    else {
+        airbridges_lenth = w_splitter+2*g_splitter;
+    }
+
+
+    // cursor = addAirBridge(curCell, newPoint(resonator_actual_x_length/2, -resonator_actual_y_length/2), size_gap, "r");
+    // cursor = addAirBridge(curCell, newPoint(resonator_actual_x_length/2, resonator_actual_y_length/2), 3*size_gap, "r");
+    // cursor = addAirBridge(curCell, newPoint(resonator_actual_x_length/2, resonator_actual_y_length/2), 3*size_gap, "d");
+    // cursor = addAirBridge(curCell, newPoint(resonator_actual_x_length/2, -resonator_actual_y_length/2), 3*size_gap, "d");
+
+
+/*   curCell->textToPolygon(100e3); // Making all texts polygons with hight of 100 um
+    curCell->addText(protect, newPoint(-chip_width/2+100e3, -chip_height/2+400e3), sample_name);    
+    curCell->textToPolygon(200e3); // Adding the sample name*/
+     // Ground plane
+    curCell->addBox(-chip_width/2, -chip_height/2, chip_width, chip_height, ground);
+    layout->booleanTool->boolOnLayer(ground, protect, mask, "A-B", 0, 0, 0); 
+    //double dHole = 5000;
+    //layout->drawing->currentCell->slotSelect(dHole,dHole,dHole,5000,25000);
+    layout->booleanTool->boolOnLayer(M, aux, aux2, "A-B", 0, 0, 0);
+    //->booleanTool->boolOnLayer(M, aux, aux2, "A-B", 0, 0, 0);
+
+    layout->booleanTool->boolOnLayer(aux2, mask, total, "A+B", 0, 0, 0);
+
+    // For the etching designs
+        // layout->booleanTool->boolOnLayer(protect, M, total, "A-B", 0, 0, 0);
+        // curCell->addBox(-chip_width/2-border, -chip_height/2-border, chip_width+border*2, chip_height+border*2, aux); //making the border
+        // layout->booleanTool->boolOnLayer(aux, ground, total, "A-B", 0, 0, 0); // same
+        // clearLayer(curCell, aux); // same
+    
+    // ===================================
+    layout->backgroundTool->clearBackground(); // to remove background picture, not present here.
+
+    clearLayer(curCell, mask);
+    clearLayer(curCell, M);
+    clearLayer(curCell, protect);
+    clearLayer(curCell, ground);
+    clearLayer(curCell, aux2);
+    clearLayer(curCell, aux);
+    clearLayer(curCell, aux6);
+}
