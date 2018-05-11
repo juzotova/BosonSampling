@@ -1,0 +1,172 @@
+#!/usr/bin/layout
+#name=Beam Splitter
+#help=Creates BeamSplitter
+
+
+#include "../lib/resonator.layout"
+#include "../lib/wiring.layout"
+#include "../lib/auxx.layout"
+#include "../lib/layersSetup.layout"
+#include "../lib/feedline.layout"
+#include "../lib/air_bridges.layout"
+#include "../lib/alignment_mark.layout"
+#include "../lib/qr_bs1.layout"
+
+
+// name Julia_metbs_h1_2w_
+
+
+        int M = 0;
+        int ebeam = 1;
+        int protect = 2;
+        int ground = 3;
+        int mask = 4;
+        int total = 5;
+        int aux = 6;
+        int aux2 = 7;
+        int aux3 = 8;
+        int aux4 = 9;
+        int aux6 = 10;
+        int aux7 = 12;
+        int ebeam_total = 11;
+
+        int border = 50e3;
+        int chip_height = 2.5e6-2*border;
+        int chip_width = 5e6-2*border; 
+        
+        
+        double ɛ = 11.8;
+        double c = 299792458.0;
+
+        int pads_shift = 450e3; 
+        double splitter_freq = 6; // in Ghz
+
+        
+
+
+        int qrSize = 500e3;
+        int qrCodePositionY = chip_height/2*25/26-qrSize;
+        int qrCodePositionX = -qrSize/2;
+
+        
+
+
+        // comments for simutating: mesh 18u, normal process memory priority, aluminum material have chousen
+        //low decimation, ground via non central -- only bridges , clean up -- on, model zero thickness -- off, edge mesh thin metal -- off, 3 ro 9 ghz step 0.02 ghz
+    
+
+        //coplanar lines sizes with resitance 50 ohms
+        int w_feed = 1e3;//0.33
+        int g_feed = 0.55e3;//0.2
+
+
+        //waveguide with resitance 50/sqrt(2) = 37.37 ohms 
+        int w_splitter = 3e3; //1.1
+        int g_splitter = 0.55e3; //0.2
+
+        int airbridge_shift =2*w_feed + w_feed;//3*w_feed + w_feed;
+        int adcurvebridge = 0e3;
+
+        int meanderSegment_splitter = 156e3; //150
+        int meanderSegment_feed = 46.17e3; //32.6
+
+        // additional lenth due to shape of T-junctions and curvatures of meanders
+        double hint_feed = 1.0; //1.006
+        double hint_splitter = 1.0;// 1.006
+
+        //positions of alignment crosses
+        int alig_cross_x = 1350e3;
+        int alig_cross_y = 900e3;
+
+        int pads_position = 500e3; // according to PCB board
+
+
+int main() {
+    // Clearing the drawing field
+    setupLayers();
+    layout->drawing->selectAll();
+    layout->drawing->deleteSelect();
+    layout->drawing->deselectAll();
+
+    //string sample_name = layout->getText("Sample name","Please enter the sample name:", "1 3 5 7 9 11 13 15 17 30"); // for a sample naming
+    
+     // Getting the cell to draw on
+    cell *curCell = layout->drawing->currentCell;
+    point cursor = newPoint(0,0);
+  
+    int width = 30e3;
+    point cursor2 =newPoint(0, 0);
+    point cursor3 =newPoint(100e3, -10e3);
+    point cursor4 =newPoint(100e3, -10e3);
+    // point cursor5 =newPoint(100e3, -100e3);
+    // point cursor6 =newPoint(100e3, -100e3);
+
+    // cursor = torusTurn(curCell, total, cursor, "rd", 2*width, width);//rdd
+    // cursor= torusTurn(curCell, total, cursor, "dl", 2*width, width);//rdd
+    // point cursor2 =newPoint(0, 2*width);
+    // cursor2 = torusTurn(curCell, total, cursor2, "rd", 4*width, width);//rdd
+    // cursor2= torusTurn(curCell, total, cursor2, "dl", 4*width, width);//rdd
+
+
+
+	// cursor = drawMeanderStep(curCell, M, cursor, 50e3, 2*width, 3*width);
+	// cursor2 = drawMeanderStep(curCell, ground, cursor2, 50e3, 2*width, width);
+
+
+
+
+
+    // curCell->textToPolygon(50e3); // Making all texts polygons with hight of 100 um
+    // curCell->addText(protect, newPoint(-1000e3, -chip_height/2+350e3), sample_name);    
+    // curCell->textToPolygon(50e3); // Adding the sample name*/
+
+     // Ground plane
+    curCell->addBox(-chip_width/2, -chip_height/2, chip_width, chip_height, ground);
+    layout->booleanTool->boolOnLayer(ground, protect, mask, "A-B", 0, 0, 0); 
+
+
+
+	//layout->booleanTool->boolOnLayer(total, ground, total, "A-B", 0, 0, 0);
+
+    //Adding qrcode
+    //addQR(curCell, qrCodePositionX,qrCodePositionY, qrSize, qrSize, protect);
+
+    //Adding fluxtraps
+    //double dHole = 5000;
+    //layout->drawing->currentCell->slotSelect(dHole,dHole,dHole,5000,25000);
+
+    //For lift-off process
+    // layout->booleanTool->boolOnLayer(M, aux, aux2, "A-B", 0, 0, 0);
+    // layout->booleanTool->boolOnLayer(aux2, mask, total, "A+B", 0, 0, 0);
+
+    // For the etching designs
+        layout->booleanTool->boolOnLayer(protect, M, total, "A-B", 0, 0, 0);
+        curCell->addBox(-chip_width/2-border, -chip_height/2-border, chip_width+border*2, chip_height+border*2, aux); //making the border
+
+        cursor = drawMeanderStep(curCell, M, cursor, 50e3, 2*width, 3*width);
+		cursor2 = drawMeanderStep(curCell, aux2, cursor2, 50e3, 2*width, width);
+
+		cursor3 = drawMeanderStep(curCell, M, cursor, 50e3, 4*width, 3*width);
+		cursor4 = drawMeanderStep(curCell, aux2, cursor2, 50e3, 4*width, width);
+
+		// cursor5 = drawMeanderStep(curCell, M, cursor, 50e3, 6*width, 3*width);
+		// cursor6 = drawMeanderStep(curCell, aux2, cursor2, 50e3, 6*width, width);
+
+		layout->booleanTool->boolOnLayer(M, aux2, aux7, "A-B", 0, 0, 0); //
+		layout->booleanTool->boolOnLayer(total, aux7, total, "A+B", 0, 0, 0); //
+
+        layout->booleanTool->boolOnLayer(aux, ground, total, "A-B", 0, 0, 0); // same
+        clearLayer(curCell, aux); // same
+    
+    // ===================================
+    layout->backgroundTool->clearBackground(); // to remove background picture, not present here.
+
+    clearLayer(curCell, mask);
+    clearLayer(curCell, M);
+    clearLayer(curCell, protect);
+    clearLayer(curCell, ground);
+    clearLayer(curCell, aux2);
+    clearLayer(curCell, aux);
+    clearLayer(curCell, aux7);
+    clearLayer(curCell, aux6);
+}

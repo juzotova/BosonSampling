@@ -1,0 +1,231 @@
+#!/usr/bin/layout
+#name=Beam Splitter
+#help=Creates BeamSplitter
+
+
+#include "../lib/resonator.layout"
+#include "../lib/wiring.layout"
+#include "../lib/auxx.layout"
+#include "../lib/layersSetup.layout"
+#include "../lib/feedline.layout"
+#include "../lib/air_bridges.layout"
+#include "../lib/alignment_mark.layout"
+#include "../lib/qr_bs1.layout"
+
+
+// name Julia_metbs_h1_2w_
+
+
+        int M = 0;
+        int ebeam = 1;
+        int protect = 2;
+        int ground = 3;
+        int mask = 4;
+        int total = 5;
+        int aux = 6;
+        int aux2 = 7;
+        int aux3 = 8;
+        int aux4 = 9;
+        int aux6 = 10;
+        int ebeam_total = 11;
+
+        int border = 50e3;
+        int chip_height = 2.5e6-2*border;
+        int chip_width = 5e6-2*border; 
+        
+        
+        double ɛ = 11.8;
+        double c = 299792458.0;
+
+        int pads_shift = 450e3; 
+        double splitter_freq = 6; // in Ghz
+
+        
+
+
+        int qrSize = 500e3;
+        int qrCodePositionY = chip_height/2*25/26-qrSize;
+        int qrCodePositionX = -qrSize/2;
+
+        
+
+
+        // comments for simutating: mesh 18u, normal process memory priority, aluminum material have chousen
+        //low decimation, ground via non central -- only bridges , clean up -- on, model zero thickness -- off, edge mesh thin metal -- off, 3 ro 9 ghz step 0.02 ghz
+    
+
+        //coplanar lines sizes with resitance 50 ohms
+        int w_feed = 19.5e3;//0.33
+        int g_feed = 5e3;//0.2
+
+
+        //waveguide with resitance 50/sqrt(2) = 37.37 ohms 
+        int w_splitter = 27e3; //1.1
+        int g_splitter = 5e3; //0.2
+
+        int airbridge_shift =2*w_feed + w_feed;//3*w_feed + w_feed;
+        int adcurvebridge = 0e3;
+
+        int meanderSegment_splitter = 435e3; //150
+        int meanderSegment_feed = 194e3; //32.6
+
+        // additional lenth due to shape of T-junctions and curvatures of meanders
+        double hint_feed = 1.006; //1.006
+        double hint_splitter = 1.006;// 1.006
+
+        //positions of alignment crosses
+        int alig_cross_x = 1350e3;
+        int alig_cross_y = 900e3;
+
+        int pads_position = 500e3; // according to PCB board
+
+
+int main() {
+    // Clearing the drawing field
+    setupLayers();
+    layout->drawing->selectAll();
+    layout->drawing->deleteSelect();
+    layout->drawing->deselectAll();
+
+    string sample_name = layout->getText("Sample name","Please enter the sample name:", "Julia_5um_h1006_2w_"); // for a sample naming
+    
+     // Getting the cell to draw on
+    cell *curCell = layout->drawing->currentCell;
+    point cursor;
+  
+
+   // Making a test resonator to see it's actual x-projection length to be able to center it with respect to the origin
+    point cursor1 = addHalfwaveTransmissionAssym(curCell, newPoint(0,0), w_splitter, g_splitter, splitter_freq, meanderSegment_splitter, "r", hint_splitter);
+    int resonator_actual_x_length = cursor1.x();
+    // Deleting the test resonator (whole M and protect layers get removed)
+    clearLayer(curCell, M);
+    clearLayer(curCell, protect);
+
+
+    // Making a test resonator to see it's actual y-projection length to be able to center it with respect to the origin
+    point cursor2 = addHalfwaveTransmissionAssym(curCell, newPoint(0,0), w_feed, g_feed, splitter_freq, meanderSegment_feed, "r", hint_feed);
+    int resonator_actual_y_length = cursor2.x();
+    // Deleting the test resonator (whole M and protect layers get removed)
+    clearLayer(curCell, M);
+    clearLayer(curCell, protect);
+
+
+
+
+
+    //Adding the real resonator this time with its center at the origin, bottom
+    cursor = addHalfwaveTransmissionAssym(curCell, newPoint(resonator_actual_x_length/2, resonator_actual_y_length/2 ), w_splitter, g_splitter, splitter_freq, meanderSegment_splitter, "l", hint_splitter);    
+        int feed_width = 2*g_feed + w_feed;
+        int splitter_width = 2*g_splitter + w_splitter;
+		    //coplanar lines to PCB pads, bottom left
+		 	point feedline_start_right_up = newPoint(resonator_actual_x_length/2, resonator_actual_y_length/2); //+w_splitter
+		    intList segmentLengthsFeed;
+		    	stringList directions;
+                directions.append("u");
+                directions.append("r");
+                directions.append("u"); //only for fabric               
+                segmentLengthsFeed.append(splitter_width);              
+                //segmentLengthsFeed.append(chip_width/2+pads_shift-feedline_start_right_up.x()); //for simulations, decreasing size
+
+                //fabrication size
+                segmentLengthsFeed.append(chip_width/2-feedline_start_right_up.x()-border-pads_position);
+                segmentLengthsFeed.append(chip_height/2-feedline_start_right_up.y()+border-splitter_width);
+		    addFeedline(curCell, feedline_start_right_up, w_feed, g_feed, segmentLengthsFeed, directions, "cd");  
+
+            // bottom rigth
+		    point feedline_start_left_up = newPoint(-resonator_actual_x_length/2, resonator_actual_y_length/2);  //+w_splitter
+		    	stringList directions;
+		    	directions.append("u");
+		   	 	directions.append("l");
+                directions.append("u"); // only for fabric
+		    addFeedline(curCell, feedline_start_left_up, w_feed, g_feed, segmentLengthsFeed, directions, "cd");
+		    cursor = addHalfwaveTransmissionAssym(curCell, newPoint(resonator_actual_x_length/2-1, resonator_actual_y_length/2+g_splitter), w_feed, g_feed, splitter_freq, meanderSegment_feed, "d", hint_feed); 
+
+
+
+   
+   //top part
+    cursor = addHalfwaveTransmissionAssym(curCell, newPoint(-resonator_actual_x_length/2, -resonator_actual_y_length/2 + w_splitter/2), w_splitter, g_splitter, splitter_freq, meanderSegment_splitter, "r", hint_splitter);
+    //top clews, left
+ 	point feedline_start_right_bottom = newPoint(resonator_actual_x_length/2, -resonator_actual_y_length/2+w_splitter/2);
+
+    	stringList directions;
+    	directions.append("d");
+   	 	directions.append("r");
+        directions.append("d");//only for fabric
+        addFeedline(curCell, feedline_start_right_bottom, w_feed, g_feed, segmentLengthsFeed, directions, "cd");   
+        // right
+    point feedline_start_left_bottom = newPoint(cursor.x()-resonator_actual_x_length, cursor.y());  //-w_splitter
+    	stringList directions;
+    	directions.append("d");
+   	 	directions.append("l");
+        directions.append("d"); //only for fabric
+    addFeedline(curCell, feedline_start_left_bottom, w_feed, g_feed, segmentLengthsFeed, directions, "cd");
+
+    cursor = addHalfwaveTransmissionAssym(curCell, newPoint(-resonator_actual_x_length/2+1, -resonator_actual_y_length/2+g_splitter), w_feed, g_feed, splitter_freq, meanderSegment_feed, "u", hint_feed);
+
+
+        //cross for alignment
+    addAlignmentMark(curCell, newPoint(-alig_cross_x, -alig_cross_y));
+    addAlignmentMark(curCell, newPoint(-alig_cross_x, alig_cross_y));
+    addAlignmentMark(curCell, newPoint(alig_cross_x, -alig_cross_y));
+    addAlignmentMark(curCell, newPoint(alig_cross_x, alig_cross_y));
+
+
+    // aribridges, left bottom, vert
+    cursor = addAirBridge(curCell, newPoint(feedline_start_left_bottom.x()-airbridge_shift, feedline_start_left_bottom.y()-4*w_feed),feed_width, "d");
+    cursor = addAirBridge(curCell, newPoint(feedline_start_left_bottom.x()-airbridge_shift, feedline_start_left_bottom.y()+4*w_feed), feed_width, "d");
+    cursor = addAirBridge(curCell, newPoint(resonator_actual_x_length/2+meanderSegment_feed+2*w_feed*2, feed_width/4), feed_width, "r"); // 5w - curve rad
+    // right bottom
+    cursor = addAirBridge(curCell, newPoint(feedline_start_right_bottom.x()+airbridge_shift, feedline_start_right_bottom.y()-4*w_feed),feed_width, "d");
+    cursor = addAirBridge(curCell, newPoint(feedline_start_right_bottom.x()+airbridge_shift, feedline_start_right_bottom.y()+4*w_feed),feed_width, "d");
+    cursor = addAirBridge(curCell, newPoint(-resonator_actual_x_length/2-meanderSegment_feed - 2*w_feed*2, feed_width/4), feed_width, "r"); // 5w -- curve rad
+
+    // left up
+    cursor = addAirBridge(curCell, newPoint(feedline_start_left_up.x()-airbridge_shift, feedline_start_left_up.y()+4*w_feed),feed_width, "d");
+    cursor = addAirBridge(curCell, newPoint(feedline_start_left_up.x()-airbridge_shift, feedline_start_left_up.y()-4*w_feed-g_feed),feed_width, "d");
+    cursor = addAirBridge(curCell, newPoint(0, -resonator_actual_y_length/2+w_splitter/2), splitter_width, "d");
+
+    //right up
+    cursor = addAirBridge(curCell, newPoint(feedline_start_right_up.x()+airbridge_shift, feedline_start_right_up.y()+4*w_feed),feed_width, "d");
+    cursor = addAirBridge(curCell, newPoint(feedline_start_right_up.x()+airbridge_shift, feedline_start_right_up.y()-4*w_feed-g_feed),feed_width, "d");
+    cursor = addAirBridge(curCell, newPoint(0, resonator_actual_y_length/2), splitter_width, "d"); 
+
+
+
+    curCell->textToPolygon(100e3); // Making all texts polygons with hight of 100 um
+    curCell->addText(protect, newPoint(-1000e3, -chip_height/2+350e3), sample_name);    
+    curCell->textToPolygon(100e3); // Adding the sample name*/
+
+     // Ground plane
+    curCell->addBox(-chip_width/2, -chip_height/2, chip_width, chip_height, ground);
+    layout->booleanTool->boolOnLayer(ground, protect, mask, "A-B", 0, 0, 0); 
+
+    //Adding qrcode
+    addQR(curCell, qrCodePositionX,qrCodePositionY, qrSize, qrSize, protect);
+
+    //Adding fluxtraps
+    //double dHole = 5000;
+    //layout->drawing->currentCell->slotSelect(dHole,dHole,dHole,5000,25000);
+
+    //For lift-off process
+    // layout->booleanTool->boolOnLayer(M, aux, aux2, "A-B", 0, 0, 0);
+    // layout->booleanTool->boolOnLayer(aux2, mask, total, "A+B", 0, 0, 0);
+
+    // For the etching designs
+        layout->booleanTool->boolOnLayer(protect, M, total, "A-B", 0, 0, 0);
+        curCell->addBox(-chip_width/2-border, -chip_height/2-border, chip_width+border*2, chip_height+border*2, aux); //making the border
+        layout->booleanTool->boolOnLayer(aux, ground, total, "A-B", 0, 0, 0); // same
+        clearLayer(curCell, aux); // same
+    
+    // ===================================
+    layout->backgroundTool->clearBackground(); // to remove background picture, not present here.
+
+    clearLayer(curCell, mask);
+    clearLayer(curCell, M);
+    clearLayer(curCell, protect);
+    clearLayer(curCell, ground);
+    clearLayer(curCell, aux2);
+    clearLayer(curCell, aux);
+    clearLayer(curCell, aux6);
+}
