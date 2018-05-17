@@ -1,0 +1,7 @@
+url=http://www.layouteditor.net
+licensee=Gleb Fedorov, Moscow Institute of Physics and Technology
+license-id=4639
+license-type=leFull
+maintainence expired=20170318
+license:
+<license>NCn20tsrL2DlH221bAV0ApTJ0RUzd1c3tX0hLP;2Fzzq1U73U0y;Be0grvk0P6ak0LE6h1HfnH2PIfR2j2z61BUw62YKR:1FyCH0SWaW1hcwL0dPsj0hAWQ0DVb;0Puqq1FExc1y;y10KopI1qqRW2</license>
